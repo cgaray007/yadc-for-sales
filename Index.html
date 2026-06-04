@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:        #f0f2f5;
+      --surface:   #ffffff;
+      --border:    #e2e6ed;
+      --accent:    #1a56db;
+      --accent-dk: #1447b5;
+      --danger:    #e02424;
+      --success:   #057a55;
+      --warn:      #c27803;
+      --text:      #111928;
+      --muted:     #6b7280;
+      --radius:    10px;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-brand { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -.2px; }
+
+    .lang-switcher { display: flex; gap: 4px; }
+    .lang-btn {
+      padding: 3px 8px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: var(--sans); font-size: 11px; font-weight: 600;
+      color: var(--muted); background: #fafbfc; cursor: pointer;
+      transition: all .15s; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .lang-btn:hover  { border-color: #93c5fd; color: var(--accent); background: #eff6ff; }
+    .lang-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+
+    .agent-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 20px; padding: 4px 12px 4px 8px;
+      font-size: 12px; color: var(--accent); font-weight: 500;
+    }
+    .agent-avatar {
+      width: 22px; height: 22px; background: var(--accent);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; color: white; font-size: 10px; font-weight: 600;
+    }
+
+    /* ── TABS + STATS BAR ── */
+    .tabs-row {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .tabs { display: flex; }
+    .tab-btn {
+      padding: 12px 18px; border: none; background: none;
+      font-family: var(--sans); font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .tab-btn.active      { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── STATS PILL ── */
+    .stats-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #1a56db 0%, #1447b5 100%);
+      border-radius: 10px; padding: 6px 14px;
+      margin: 6px 0; cursor: pointer;
+      transition: filter .15s, transform .15s;
+      box-shadow: 0 2px 8px rgba(26,86,219,.25);
+      position: relative; overflow: hidden;
+      min-width: 200px;
+    }
+    .stats-pill::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .stats-pill:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .stats-pill:active { transform: translateY(0); }
+
+    .stats-pill-icon {
+      font-size: 18px; flex-shrink: 0;
+    }
+    .stats-pill-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .stats-pill-label {
+      font-size: 9px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; color: rgba(255,255,255,.7); line-height: 1;
+      white-space: nowrap;
+    }
+    .stats-pill-amount {
+      font-size: 15px; font-weight: 700; color: white;
+      font-family: var(--mono); line-height: 1.3; white-space: nowrap;
+    }
+    .stats-pill-counts {
+      display: flex; gap: 6px; align-items: center; flex-shrink: 0;
+    }
+    .stats-chip {
+      display: flex; flex-direction: column; align-items: center;
+      background: rgba(255,255,255,.15); border-radius: 6px;
+      padding: 3px 7px; min-width: 32px;
+    }
+    .stats-chip-val  { font-size: 13px; font-weight: 700; color: white; font-family: var(--mono); line-height: 1; }
+    .stats-chip-lbl  { font-size: 8px; font-weight: 600; color: rgba(255,255,255,.65); text-transform: uppercase; letter-spacing: .05em; line-height: 1.2; }
+
+    .stats-pill.loading .stats-pill-amount { opacity: .4; }
+
+    /* ── STATS POPOVER ── */
+    .stats-popover {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      background: white; border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.13);
+      min-width: 220px; z-index: 50;
+      animation: fadeDown .15s ease;
+    }
+    .stats-popover.show { display: block; }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stats-popover-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted);
+      margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid var(--border);
+    }
+    .stats-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .stats-row-label { font-size: 12px; color: var(--muted); }
+    .stats-row-val   { font-size: 13px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+    .stats-row-val.green  { color: var(--success); }
+    .stats-row-val.blue   { color: var(--accent); }
+    .stats-refresh {
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      margin-top: 12px; font-size: 11px; color: var(--accent);
+      cursor: pointer; font-weight: 600; padding: 6px;
+      border-radius: 6px; transition: background .15s;
+    }
+    .stats-refresh:hover { background: #eff6ff; }
+
+    /* stats pill wrapper needs position:relative for popover */
+    .stats-wrap { position: relative; display: flex; align-items: center; }
+
+    /* ── MAIN ── */
+    .main    { padding: 20px; max-width: 640px; margin: 0 auto; }
+    .panel   { display: none; }
+    .panel.active { display: block; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted);
+      margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); margin-bottom: 5px;
+    }
+    label .req { color: var(--danger); margin-left: 2px; }
+    input, select, textarea {
+      width: 100%; padding: 9px 11px;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-family: var(--sans); font-size: 14px; color: var(--text);
+      background: #fafbfc; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(26,86,219,.1);
+      background: white;
+    }
+    input.error, textarea.error { border-color: var(--danger); }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .field-error { font-size: 11px; color: var(--danger); margin-top: 4px; display: none; }
+    .field-error.show { display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .exp-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 7px; margin-top: 2px; }
+    .exp-pill {
+      padding: 8px 6px; border: 1px solid var(--border); border-radius: 8px;
+      text-align: center; font-size: 12px; font-weight: 500; color: var(--muted);
+      cursor: pointer; transition: all .15s; background: #fafbfc; user-select: none;
+    }
+    .exp-pill:hover  { border-color: #93c5fd; color: var(--accent); background: #eff6ff; }
+    .exp-pill.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); font-weight: 600; }
+
+    .lookup-wrap { position: relative; }
+    .suggestions {
+      display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+      z-index: 50; background: white; border: 1px solid var(--border);
+      border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.12); overflow: hidden;
+    }
+    .suggestions.show { display: block; }
+    .suggestion-item {
+      padding: 10px 14px; cursor: pointer;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background .1s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover, .suggestion-item.hl { background: #eff6ff; }
+    .sug-name  { font-weight: 600; color: var(--text); }
+    .sug-id    { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+    .lookup-result { margin-top: 8px; padding: 10px 12px; border-radius: 8px; display: none; }
+    .lookup-result.found    { background: #ecfdf5; border: 1px solid #6ee7b7; display: block; }
+    .lookup-result.notfound { background: #fef2f2; border: 1px solid #fca5a5; display: block; }
+    .lookup-name { font-weight: 600; font-size: 14px; color: var(--text); }
+    .lookup-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .btn {
+      padding: 10px 18px; border: none; border-radius: 8px;
+      font-family: var(--sans); font-size: 14px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+      transition: all .15s;
+    }
+    .btn-primary  { background: var(--accent); color: white; }
+    .btn-primary:hover  { background: var(--accent-dk); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ghost    { background: none; border: 1px solid var(--border); color: var(--text); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-success  { background: var(--success); color: white; }
+    .btn-success:hover { filter: brightness(.92); }
+    .btn-success:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-full     { width: 100%; justify-content: center; margin-top: 4px; }
+
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); z-index: 100;
+      align-items: flex-end; justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    @media (min-width: 500px) { .overlay { align-items: center; padding: 20px; } }
+    .modal {
+      background: white; border-radius: 14px 14px 0 0;
+      width: 100%; max-width: 480px; max-height: 90vh;
+      overflow-y: auto; padding: 24px 20px 20px;
+      animation: slideUp .22s ease;
+    }
+    @media (min-width: 500px) { .modal { border-radius: 14px; } }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .modal-sub   { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+    .review-row  {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; padding: 9px 0;
+      border-bottom: 1px solid var(--border); gap: 12px;
+    }
+    .review-row:last-of-type { border-bottom: none; }
+    .review-key { font-size: 12px; color: var(--muted); font-weight: 500; flex-shrink: 0; width: 130px; }
+    .review-val { font-size: 13px; font-weight: 500; text-align: right; word-break: break-word; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; justify-content: center; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 500; color: white;
+      opacity: 0; transition: all .3s; pointer-events: none;
+      z-index: 200; white-space: nowrap; max-width: 90vw; text-align: center;
+    }
+    .toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+    .toast.warn    { background: var(--warn); }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: white; border-radius: 50%;
+      animation: spin .6s linear infinite; flex-shrink: 0;
+    }
+    .spinner-dark {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(26,86,219,.2);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .stats-pill { min-width: 0; }
+      .stats-pill-amount { font-size: 13px; }
+      .stats-chip-val { font-size: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-brand">&#9670; Lead Capture</div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+      <button class="lang-btn"        onclick="setLang('es')">ES</button>
+      <button class="lang-btn"        onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+  <div class="agent-badge">
+    <div class="agent-avatar" id="agent-avatar">?</div>
+    <span id="agent-display">...</span>
+  </div>
+</div>
+
+<!-- TABS ROW WITH STATS PILL -->
+<div class="tabs-row">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-lead" onclick="switchTab('lead',this)">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span data-i18n="tab_lead"></span>
+    </button>
+    <button class="tab-btn" id="tab-deposit" onclick="switchTab('deposit',this)">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span data-i18n="tab_deposit"></span>
+    </button>
+  </div>
+
+  <!-- STATS PILL -->
+  <div class="stats-wrap" id="stats-wrap">
+    <div class="stats-pill loading" id="stats-pill" onclick="togglePopover()">
+      <div class="stats-pill-icon">💰</div>
+      <div class="stats-pill-body">
+        <div class="stats-pill-label" id="stats-month">...</div>
+        <div class="stats-pill-amount" id="stats-amount">$ —</div>
+      </div>
+      <div class="stats-pill-counts">
+        <div class="stats-chip">
+          <div class="stats-chip-val" id="stats-ftd">—</div>
+          <div class="stats-chip-lbl">FTD</div>
+        </div>
+        <div class="stats-chip">
+          <div class="stats-chip-val" id="stats-add">—</div>
+          <div class="stats-chip-lbl" data-i18n="stats_add_lbl"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POPOVER -->
+    <div class="stats-popover" id="stats-popover">
+      <div class="stats-popover-title" data-i18n="stats_popover_title"></div>
+      <div class="stats-row">
+        <span class="stats-row-label" data-i18n="stats_total_amount"></span>
+        <span class="stats-row-val green" id="pop-amount">—</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-row-label" data-i18n="stats_total_deps"></span>
+        <span class="stats-row-val blue" id="pop-total">—</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-row-label">FTD</span>
+        <span class="stats-row-val" id="pop-ftd">—</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-row-label" data-i18n="stats_additional"></span>
+        <span class="stats-row-val" id="pop-add">—</span>
+      </div>
+      <div class="stats-refresh" onclick="loadStats()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        <span data-i18n="stats_refresh"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEAD PANEL -->
+  <div id="panel-lead" class="panel active">
+    <div class="card">
+      <div class="card-title" data-i18n="card_identification"></div>
+      <div class="field">
+        <label><span data-i18n="label_clientId"></span> <span class="req">*</span></label>
+        <input id="l-clientId" data-i18n-placeholder="placeholder_clientId" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+        <div class="field-error" id="err-l-clientId"></div>
+      </div>
+      <div class="field">
+        <label><span data-i18n="label_fullName"></span> <span class="req">*</span></label>
+        <input id="l-name" data-i18n-placeholder="placeholder_fullName" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+        <div class="field-error" id="err-l-name"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label><span data-i18n="label_leadDate"></span> <span class="req">*</span></label>
+          <input type="date" id="l-leadDate">
+          <div class="field-error" id="err-l-leadDate"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="label_age"></label>
+          <input type="number" id="l-yearsOld" data-i18n-placeholder="placeholder_age" min="18" max="100">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label data-i18n="label_brand"></label>
+          <input id="l-brand" data-i18n-placeholder="placeholder_brand" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+        </div>
+        <div class="field">
+          <label data-i18n="label_country"></label>
+          <input id="l-country" data-i18n-placeholder="placeholder_country" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" data-i18n="card_financial"></div>
+      <div class="grid-2">
+        <div class="field">
+          <label data-i18n="label_savings"></label>
+          <input type="number" id="l-savings" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label data-i18n="label_investments"></label>
+          <input type="number" id="l-investments" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="label_banks"></label>
+        <input id="l-banks" data-i18n-placeholder="placeholder_banks" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+      </div>
+      <div class="field">
+        <label data-i18n="label_crypto"></label>
+        <input id="l-cryptoExchange" data-i18n-placeholder="placeholder_crypto" oninput="normalizeField(this,false)" onblur="normalizeField(this,true)">
+      </div>
+      <div class="field">
+        <label data-i18n="label_property"></label>
+        <div class="exp-grid-2">
+          <div class="exp-pill" onclick="pickOwnRent('Own',this)" data-i18n="pill_own"></div>
+          <div class="exp-pill" onclick="pickOwnRent('Rent',this)" data-i18n="pill_rent"></div>
+        </div>
+        <input type="hidden" id="l-ownRent" value="">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" data-i18n="card_experience"></div>
+      <div class="field">
+        <label data-i18n="label_experience"></label>
+        <textarea id="l-exp" rows="3" data-i18n-placeholder="placeholder_experience"></textarea>
+      </div>
+      <div class="field">
+        <label data-i18n="label_comments"></label>
+        <textarea id="l-comments" rows="3" data-i18n-placeholder="placeholder_comments"></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="reviewLead()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span data-i18n="btn_review"></span>
+    </button>
+  </div>
+
+  <!-- DEPOSIT PANEL -->
+  <div id="panel-deposit" class="panel">
+    <div class="card">
+      <div class="card-title" data-i18n="card_search"></div>
+      <div class="field">
+        <label><span data-i18n="label_search"></span> <span class="req">*</span></label>
+        <div class="lookup-wrap">
+          <div style="display:flex;gap:8px">
+            <input id="d-search"
+              data-i18n-placeholder="placeholder_search"
+              oninput="onSearchInput()"
+              onkeydown="onSearchKeydown(event)"
+              onblur="hideSuggestionsDelayed()"
+              autocomplete="off"
+              style="flex:1">
+            <button class="btn btn-primary" id="btn-lookup"
+              onclick="doExactLookup()"
+              style="padding:9px 14px;margin-top:0;white-space:nowrap">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span data-i18n="btn_search"></span>
+            </button>
+          </div>
+          <input type="hidden" id="d-clientId">
+          <div class="suggestions" id="suggestions"></div>
+          <div class="lookup-result" id="lookup-result"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" data-i18n="card_deposit_data"></div>
+      <div class="grid-2">
+        <div class="field">
+          <label><span data-i18n="label_amount"></span> <span class="req">*</span></label>
+          <input type="number" id="d-amount" placeholder="0.00" min="0.01" step="0.01">
+          <div class="field-error" id="err-d-amount"></div>
+        </div>
+        <div class="field">
+          <label><span data-i18n="label_depositDate"></span> <span class="req">*</span></label>
+          <input type="date" id="d-depDate">
+          <div class="field-error" id="err-d-depDate"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="reviewDeposit()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span data-i18n="btn_review"></span>
+    </button>
+  </div>
+
+</div>
+
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-sub"   id="modal-sub"></div>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const AGENT_CODE = '<?= AGENT_CODE ?>';
+const AGENT_NAME = '<?= AGENT_NAME ?>';
+
+/* ═══════════════════════════════════════════
+   I18N
+════════════════════════════════════════════ */
+const TRANSLATIONS = {
+  pt: {
+    tab_lead:'Novo Lead',tab_deposit:'Depósito',
+    card_identification:'Identificação do cliente',card_financial:'Perfil financeiro',
+    card_experience:'Experiência com investimentos',card_search:'Buscar cliente',
+    card_deposit_data:'Dados do depósito',
+    label_clientId:'Client ID',label_fullName:'Nome completo',label_leadDate:'Data do lead',
+    label_age:'Anos de idade',label_brand:'Brand',label_country:'País',
+    label_savings:'Savings ($)',label_investments:'Investments ($)',label_banks:'Bancos',
+    label_crypto:'Crypto Exchange',label_property:'Imóvel',label_experience:'Experiência',
+    label_comments:'Comentários',label_search:'Client ID ou Nome',
+    label_amount:'Valor ($)',label_depositDate:'Data do depósito',
+    pill_own:'Próprio',pill_rent:'Alugado',
+    btn_review:'Revisar antes de enviar',btn_search:'Buscar',
+    btn_back:'← Voltar e corrigir',btn_confirm:'✓ Confirmar e salvar',btn_saving:'Salvando...',
+    placeholder_clientId:'Ex: CLI-00123',placeholder_fullName:'Cole ou digite o nome',
+    placeholder_age:'Ex: 42',placeholder_brand:'Ex: BrandX',placeholder_country:'Ex: Brasil',
+    placeholder_banks:'Ex: Itaú, Nubank',placeholder_crypto:'Ex: Binance, Coinbase',
+    placeholder_experience:'Descreva a experiência do cliente com investimentos...',
+    placeholder_comments:'Observações adicionais sobre o cliente...',
+    placeholder_search:'Digite ID ou nome do cliente...',
+    modal_lead_title:'Confirmar novo lead',modal_lead_sub:'Confira os dados antes de salvar.',
+    modal_dep_title:'Confirmar depósito',modal_dep_sub:'Confira os dados antes de salvar.',
+    review_clientId:'Client ID',review_name:'Nome',review_leadDate:'Data do lead',
+    review_age:'Idade',review_brand:'Brand',review_country:'País',
+    review_savings:'Savings',review_investments:'Investments',review_banks:'Bancos',
+    review_crypto:'Crypto',review_property:'Imóvel',review_experience:'Experiência',
+    review_comments:'Comentários',review_agent:'Agente',review_amount:'Valor',review_date:'Data',
+    err_clientId:'Client ID é obrigatório',err_name:'Nome é obrigatório',
+    err_date:'Data é obrigatória',err_amount:'Valor deve ser maior que zero',
+    err_dep_date:'Data é obrigatória',err_no_client:'Selecione um cliente antes de continuar',
+    toast_lead_saved:'Lead salvo! ID: ',toast_ftd:'🟡 Primeiro depósito (FTD)',
+    toast_additional:'🟢 Depósito adicional',
+    lookup_searching:'Buscando...',lookup_not_found:'Nenhum cliente encontrado para',
+    lookup_hint:'Verifique o ID ou cadastre como Lead primeiro.',
+    lookup_type_hint:'Digite um ID ou nome para buscar.',
+    lookup_error:'Erro: ',lookup_exp:'Exp: ',lookup_lead:'Lead: ',
+    stats_add_lbl:'Adic.',stats_popover_title:'Meu mês',
+    stats_total_amount:'Total depositado',stats_total_deps:'Total depósitos',
+    stats_additional:'Adicionais',stats_refresh:'Atualizar',
+  },
+  es: {
+    tab_lead:'Nuevo Lead',tab_deposit:'Depósito',
+    card_identification:'Identificación del cliente',card_financial:'Perfil financiero',
+    card_experience:'Experiencia con inversiones',card_search:'Buscar cliente',
+    card_deposit_data:'Datos del depósito',
+    label_clientId:'Client ID',label_fullName:'Nombre completo',label_leadDate:'Fecha del lead',
+    label_age:'Años de edad',label_brand:'Brand',label_country:'País',
+    label_savings:'Ahorros',label_investments:'Inversiones',label_banks:'Bancos',
+    label_crypto:'Crypto Exchange',label_property:'Vivienda',label_experience:'Experiencia',
+    label_comments:'Comentarios',label_search:'Client ID o Nombre',
+    label_amount:'Monto',label_depositDate:'Fecha del depósito',
+    pill_own:'Propia',pill_rent:'Alquilada',
+    btn_review:'Revisar antes de enviar',btn_search:'Buscar',
+    btn_back:'← Volver y corregir',btn_confirm:'✓ Confirmar y guardar',btn_saving:'Guardando...',
+    placeholder_clientId:'Ej: CLI-00123',placeholder_fullName:'Pegue o escriba el nombre',
+    placeholder_age:'Ej: 42',placeholder_brand:'Ej: BrandX',placeholder_country:'Ej: Argentina',
+    placeholder_banks:'Ej: Santander, BBVA',placeholder_crypto:'Ej: Binance, Coinbase',
+    placeholder_experience:'Describa la experiencia del cliente con inversiones...',
+    placeholder_comments:'Observaciones adicionales sobre el cliente...',
+    placeholder_search:'Escriba ID o nombre del cliente...',
+    modal_lead_title:'Confirmar nuevo lead',modal_lead_sub:'Verifique los datos antes de guardar.',
+    modal_dep_title:'Confirmar depósito',modal_dep_sub:'Verifique los datos antes de guardar.',
+    review_clientId:'Client ID',review_name:'Nombre',review_leadDate:'Fecha del lead',
+    review_age:'Edad',review_brand:'Brand',review_country:'País',
+    review_savings:'Ahorros',review_investments:'Inversiones',review_banks:'Bancos',
+    review_crypto:'Crypto',review_property:'Vivienda',review_experience:'Experiencia',
+    review_comments:'Comentarios',review_agent:'Agente',review_amount:'Monto',review_date:'Fecha',
+    err_clientId:'Client ID es obligatorio',err_name:'El nombre es obligatorio',
+    err_date:'La fecha es obligatoria',err_amount:'El monto debe ser mayor que cero',
+    err_dep_date:'La fecha es obligatoria',err_no_client:'Seleccione un cliente antes de continuar',
+    toast_lead_saved:'¡Lead guardado! ID: ',toast_ftd:'🟡 Primer depósito (FTD)',
+    toast_additional:'🟢 Depósito adicional',
+    lookup_searching:'Buscando...',lookup_not_found:'Ningún cliente encontrado para',
+    lookup_hint:'Verifique el ID o registre como Lead primero.',
+    lookup_type_hint:'Escriba un ID o nombre para buscar.',
+    lookup_error:'Error: ',lookup_exp:'Exp: ',lookup_lead:'Lead: ',
+    stats_add_lbl:'Adic.',stats_popover_title:'Mi mes',
+    stats_total_amount:'Total depositado',stats_total_deps:'Total depósitos',
+    stats_additional:'Adicionales',stats_refresh:'Actualizar',
+  },
+  en: {
+    tab_lead:'New Lead',tab_deposit:'Deposit',
+    card_identification:'Client Identification',card_financial:'Financial Profile',
+    card_experience:'Investment Experience',card_search:'Search Client',
+    card_deposit_data:'Deposit Details',
+    label_clientId:'Client ID',label_fullName:'Full Name',label_leadDate:'Lead Date',
+    label_age:'Age',label_brand:'Brand',label_country:'Country',
+    label_savings:'Savings',label_investments:'Investments',label_banks:'Banks',
+    label_crypto:'Crypto Exchange',label_property:'Property',label_experience:'Experience',
+    label_comments:'Comments',label_search:'Client ID or Name',
+    label_amount:'Amount',label_depositDate:'Deposit Date',
+    pill_own:'Own',pill_rent:'Rent',
+    btn_review:'Review before submitting',btn_search:'Search',
+    btn_back:'← Back and edit',btn_confirm:'✓ Confirm and save',btn_saving:'Saving...',
+    placeholder_clientId:'e.g. CLI-00123',placeholder_fullName:'Paste or type the name',
+    placeholder_age:'e.g. 42',placeholder_brand:'e.g. BrandX',placeholder_country:'e.g. United States',
+    placeholder_banks:'e.g. Chase, Wells Fargo',placeholder_crypto:'e.g. Binance, Coinbase',
+    placeholder_experience:"Describe the client's investment experience...",
+    placeholder_comments:'Additional notes about the client...',
+    placeholder_search:'Type client ID or name...',
+    modal_lead_title:'Confirm new lead',modal_lead_sub:'Check the details before saving.',
+    modal_dep_title:'Confirm deposit',modal_dep_sub:'Check the details before saving.',
+    review_clientId:'Client ID',review_name:'Name',review_leadDate:'Lead date',
+    review_age:'Age',review_brand:'Brand',review_country:'Country',
+    review_savings:'Savings',review_investments:'Investments',review_banks:'Banks',
+    review_crypto:'Crypto',review_property:'Property',review_experience:'Experience',
+    review_comments:'Comments',review_agent:'Agent',review_amount:'Amount',review_date:'Date',
+    err_clientId:'Client ID is required',err_name:'Name is required',
+    err_date:'Date is required',err_amount:'Amount must be greater than zero',
+    err_dep_date:'Date is required',err_no_client:'Please select a client first',
+    toast_lead_saved:'Lead saved! ID: ',toast_ftd:'🟡 First deposit (FTD)',
+    toast_additional:'🟢 Additional deposit',
+    lookup_searching:'Searching...',lookup_not_found:'No client found for',
+    lookup_hint:'Check the ID or register as a Lead first.',
+    lookup_type_hint:'Type an ID or name to search.',
+    lookup_error:'Error: ',lookup_exp:'Exp: ',lookup_lead:'Lead: ',
+    stats_add_lbl:'Add.',stats_popover_title:'My month',
+    stats_total_amount:'Total deposited',stats_total_deps:'Total deposits',
+    stats_additional:'Additional',stats_refresh:'Refresh',
+  }
+};
+
+let _lang = 'pt';
+function t(k) { return (TRANSLATIONS[_lang]&&TRANSLATIONS[_lang][k])||TRANSLATIONS.pt[k]||k; }
+function setLang(lang) {
+  _lang = lang;
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    b.classList.toggle('active', b.textContent.toLowerCase()===lang);
+  });
+  applyTranslations();
+}
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+}
+
+/* ═══════════════════════════════════════════
+   STATS
+════════════════════════════════════════════ */
+let _statsLoaded = false;
+let _popoverOpen = false;
+
+function loadStats() {
+  const pill = document.getElementById('stats-pill');
+  pill.classList.add('loading');
+  document.getElementById('stats-amount').innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;display:inline-block"></div>';
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      _statsLoaded = true;
+      pill.classList.remove('loading');
+
+      const fmt = function(n) {
+        return '$ ' + Number(n).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+      };
+
+      document.getElementById('stats-month').textContent  = data.month;
+      document.getElementById('stats-amount').textContent = fmt(data.totalAmount);
+      document.getElementById('stats-ftd').textContent    = data.countFTD;
+      document.getElementById('stats-add').textContent    = data.countAdd;
+
+      document.getElementById('pop-amount').textContent = fmt(data.totalAmount);
+      document.getElementById('pop-total').textContent  = data.total;
+      document.getElementById('pop-ftd').textContent    = data.countFTD;
+      document.getElementById('pop-add').textContent    = data.countAdd;
+    })
+    .withFailureHandler(function() {
+      pill.classList.remove('loading');
+      document.getElementById('stats-amount').textContent = '$ —';
+    })
+    .getMyDeposits(AGENT_CODE);
+}
+
+function togglePopover() {
+  _popoverOpen = !_popoverOpen;
+  document.getElementById('stats-popover').classList.toggle('show', _popoverOpen);
+  if (_popoverOpen && !_statsLoaded) loadStats();
+}
+
+document.addEventListener('click', function(e) {
+  if (_popoverOpen && !document.getElementById('stats-wrap').contains(e.target)) {
+    _popoverOpen = false;
+    document.getElementById('stats-popover').classList.remove('show');
+  }
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+let _pendingAction=null,_pendingPayload=null,_lookupCache=null;
+let _suggestItems=[],_suggestActive=-1,_suggestTimer=null,_toastTimer=null;
+
+(function init(){
+  document.getElementById('agent-display').textContent = AGENT_NAME+' · '+AGENT_CODE;
+  document.getElementById('agent-avatar').textContent  = AGENT_NAME.charAt(0).toUpperCase();
+  document.getElementById('l-leadDate').value = today();
+  document.getElementById('d-depDate').value  = today();
+  applyTranslations();
+  loadStats();
+})();
+
+function today(){ return new Date().toISOString().split('T')[0]; }
+
+function normalizeField(el,shouldTrim){
+  const pos=el.selectionStart,raw=el.value,clean=normalizeStr(raw,shouldTrim);
+  if(clean!==raw){el.value=clean;try{el.setSelectionRange(pos,pos);}catch(e){}}
+}
+function normalizeStr(text,shouldTrim){
+  if(!text)return'';
+  let s=String(text).normalize('NFC')
+    .replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"')
+    .replace(/[\u2013\u2014]/g,'-').replace(/\u00A0/g,' ')
+    .replace(/[\r\n\t]+/g,' ').replace(/ {2,}/g,' ');
+  if(shouldTrim!==false)s=s.trim();
+  return s;
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');
+  clearErrors();
+}
+
+function pickOwnRent(val,el){
+  document.querySelectorAll('.exp-grid-2 .exp-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('l-ownRent').value=val;
+}
+
+/* ── Deposit search ── */
+function onSearchInput(){
+  _lookupCache=null;
+  document.getElementById('d-clientId').value='';
+  clearLookupResult();
+  clearTimeout(_suggestTimer);
+  const q=document.getElementById('d-search').value.trim();
+  if(!q){hideSuggestions();return;}
+  _suggestTimer=setTimeout(function(){fetchSuggestions(q);},300);
+}
+function fetchSuggestions(q){
+  google.script.run
+    .withSuccessHandler(function(results){_suggestItems=results||[];_suggestActive=-1;renderSuggestions();})
+    .withFailureHandler(function(){hideSuggestions();})
+    .searchClients(q);
+}
+function renderSuggestions(){
+  const box=document.getElementById('suggestions');
+  if(!_suggestItems.length){hideSuggestions();return;}
+  box.innerHTML=_suggestItems.map(function(r,i){
+    return'<div class="suggestion-item" data-i="'+i+'" onmousedown="pickSuggestion('+i+')">'+
+      '<span class="sug-name">'+escHtml(r.fullName)+'</span>'+
+      '<span class="sug-id">'+escHtml(String(r.clientId))+'</span></div>';
+  }).join('');
+  box.classList.add('show');
+}
+function pickSuggestion(idx){
+  const r=_suggestItems[idx];if(!r)return;
+  document.getElementById('d-search').value=r.fullName+'  ['+r.clientId+']';
+  document.getElementById('d-clientId').value=String(r.clientId);
+  hideSuggestions();setLookupFound(r);
+}
+function hideSuggestions(){document.getElementById('suggestions').classList.remove('show');_suggestActive=-1;}
+function hideSuggestionsDelayed(){setTimeout(hideSuggestions,400);}
+function onSearchKeydown(e){
+  const items=document.querySelectorAll('.suggestion-item');
+  if(e.key==='ArrowDown'){e.preventDefault();_suggestActive=Math.min(_suggestActive+1,items.length-1);highlightSuggestion(items);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_suggestActive=Math.max(_suggestActive-1,0);highlightSuggestion(items);}
+  else if(e.key==='Enter'){e.preventDefault();if(_suggestActive>=0&&_suggestItems[_suggestActive])pickSuggestion(_suggestActive);else doExactLookup();}
+  else if(e.key==='Escape')hideSuggestions();
+}
+function highlightSuggestion(items){
+  items.forEach(function(el,i){el.classList.toggle('hl',i===_suggestActive);});
+  if(items[_suggestActive])items[_suggestActive].scrollIntoView({block:'nearest'});
+}
+function doExactLookup(){
+  hideSuggestions();
+  const rawQ=normalizeStr(document.getElementById('d-search').value,true);
+  const btn=document.getElementById('btn-lookup');
+  if(!rawQ){showLookupNotFound(t('lookup_type_hint'));return;}
+  const bracketMatch=rawQ.match(/\[([^\]]+)\]$/);
+  const q=bracketMatch?bracketMatch[1].trim():rawQ;
+  const box=document.getElementById('lookup-result');
+  box.className='lookup-result found';
+  box.innerHTML='<span style="color:var(--muted);font-size:12px">'+t('lookup_searching')+'</span>';
+  if(btn){btn.disabled=true;btn.style.opacity='.6';}
+  _lookupCache=null;document.getElementById('d-clientId').value='';
+  google.script.run
+    .withSuccessHandler(function(results){
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+      if(!results||!results.length){showLookupNotFound(t('lookup_not_found')+' <b>'+escHtml(rawQ)+'</b>.<br><span style="font-size:11px">'+t('lookup_hint')+'</span>');return;}
+      const qLower=q.toLowerCase();let match=null;
+      for(let i=0;i<results.length;i++){if(String(results[i].clientId).toLowerCase()===qLower){match=results[i];break;}}
+      if(!match)for(let i=0;i<results.length;i++){if(String(results[i].fullName).toLowerCase()===qLower){match=results[i];break;}}
+      if(!match)match=results[0];
+      document.getElementById('d-search').value=match.fullName+'  ['+match.clientId+']';
+      document.getElementById('d-clientId').value=String(match.clientId);
+      setLookupFound(match);
+    })
+    .withFailureHandler(function(err){
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+      showLookupNotFound(t('lookup_error')+escHtml((err&&err.message)?err.message:String(err)));
+    })
+    .searchClients(q);
+}
+function setLookupFound(r){
+  _lookupCache=r;
+  const box=document.getElementById('lookup-result');
+  box.className='lookup-result found';
+  box.innerHTML='<div class="lookup-name">'+escHtml(r.fullName)+'</div>'+
+    '<div class="lookup-meta">ID: '+escHtml(String(r.clientId))+
+    ' &nbsp;·&nbsp; '+t('lookup_lead')+fmtDate(r.leadDate)+
+    ' &nbsp;·&nbsp; '+t('lookup_exp')+escHtml(r.investmentExperience||'—')+'</div>';
+}
+function showLookupNotFound(html){
+  _lookupCache=null;document.getElementById('d-clientId').value='';
+  const box=document.getElementById('lookup-result');box.className='lookup-result notfound';box.innerHTML=html;
+}
+function clearLookupResult(){const box=document.getElementById('lookup-result');box.className='lookup-result';box.innerHTML='';}
+
+/* ── Validation ── */
+function setError(id,msg){
+  const el=document.getElementById(id),err=document.getElementById('err-'+id);
+  if(el)el.classList.add('error');
+  if(err){err.textContent=msg;err.classList.add('show');}
+}
+function clearErrors(){
+  document.querySelectorAll('.error').forEach(e=>e.classList.remove('error'));
+  document.querySelectorAll('.field-error').forEach(e=>{e.textContent='';e.classList.remove('show');});
+}
+function validateLead(){
+  clearErrors();let ok=true;
+  if(!normalizeStr(document.getElementById('l-clientId').value,true)){setError('l-clientId',t('err_clientId'));ok=false;}
+  if(!normalizeStr(document.getElementById('l-name').value,true)){setError('l-name',t('err_name'));ok=false;}
+  if(!document.getElementById('l-leadDate').value){setError('l-leadDate',t('err_date'));ok=false;}
+  return ok;
+}
+function validateDeposit(){
+  clearErrors();let ok=true;
+  if(!_lookupCache){showToast(t('err_no_client'),'warn');ok=false;}
+  const amount=parseFloat(document.getElementById('d-amount').value);
+  if(!amount||amount<=0){setError('d-amount',t('err_amount'));ok=false;}
+  if(!document.getElementById('d-depDate').value){setError('d-depDate',t('err_dep_date'));ok=false;}
+  return ok;
+}
+
+/* ── Review / modal ── */
+function reviewLead(){
+  if(!validateLead())return;
+  const clientId=normalizeStr(document.getElementById('l-clientId').value,true);
+  const name=normalizeStr(document.getElementById('l-name').value,true);
+  const leadDate=document.getElementById('l-leadDate').value;
+  const yearsOld=document.getElementById('l-yearsOld').value||'';
+  const brand=normalizeStr(document.getElementById('l-brand').value,true);
+  const country=normalizeStr(document.getElementById('l-country').value,true);
+  const savings=document.getElementById('l-savings').value||'';
+  const invest=document.getElementById('l-investments').value||'';
+  const banks=normalizeStr(document.getElementById('l-banks').value,true);
+  const crypto=normalizeStr(document.getElementById('l-cryptoExchange').value,true);
+  const ownRent=document.getElementById('l-ownRent').value||'';
+  const exp=document.getElementById('l-exp').value.trim()||'';
+  const comments=document.getElementById('l-comments').value.trim()||'';
+  _pendingAction='lead';
+  _pendingPayload={clientId,fullName:name,leadDate,investmentExperience:exp,brand,country,savings,banks,investments:invest,ownRent,cryptoExchange:crypto,yearsOld,comments,agentCode:AGENT_CODE};
+  openModal(t('modal_lead_title'),t('modal_lead_sub'),[
+    [t('review_clientId'),clientId],[t('review_name'),name],[t('review_leadDate'),fmtDate(leadDate)],
+    [t('review_age'),yearsOld||'—'],[t('review_brand'),brand||'—'],[t('review_country'),country||'—'],
+    [t('review_savings'),savings?'$ '+Number(savings).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'],
+    [t('review_investments'),invest?'$ '+Number(invest).toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'],
+    [t('review_banks'),banks||'—'],[t('review_crypto'),crypto||'—'],[t('review_property'),ownRent||'—'],
+    [t('review_experience'),exp||'—'],[t('review_comments'),comments||'—'],
+    [t('review_agent'),AGENT_NAME+' ('+AGENT_CODE+')'],
+  ]);
+}
+function reviewDeposit(){
+  if(!validateDeposit())return;
+  const clientId=String(_lookupCache.clientId);
+  const amount=parseFloat(document.getElementById('d-amount').value);
+  const depDate=document.getElementById('d-depDate').value;
+  _pendingAction='deposit';
+  _pendingPayload={clientId,amount,depositDate:depDate,agentCode:AGENT_CODE};
+  openModal(t('modal_dep_title'),t('modal_dep_sub'),[
+    [t('review_clientId'),clientId],[t('review_name'),_lookupCache.fullName],
+    [t('review_amount'),'$ '+amount.toLocaleString('pt-BR',{minimumFractionDigits:2})],
+    [t('review_date'),fmtDate(depDate)],[t('review_agent'),AGENT_NAME+' ('+AGENT_CODE+')'],
+  ]);
+}
+function openModal(title,sub,rows){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-sub').textContent=sub;
+  document.getElementById('modal-body').innerHTML=rows.map(function(r){
+    return'<div class="review-row"><span class="review-key">'+escHtml(r[0])+'</span><span class="review-val">'+escHtml(String(r[1]))+'</span></div>';
+  }).join('');
+  document.getElementById('modal-actions').innerHTML=
+    '<button class="btn btn-ghost" onclick="closeModal()">'+t('btn_back')+'</button>'+
+    '<button class="btn btn-success" id="btn-confirm" onclick="confirmSend()">'+t('btn_confirm')+'</button>';
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('show');_pendingAction=null;_pendingPayload=null;}
+function overlayClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
+function confirmSend(){
+  const btn=document.getElementById('btn-confirm');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> '+t('btn_saving');
+  if(_pendingAction==='lead'){
+    google.script.run.withSuccessHandler(onLeadSuccess).withFailureHandler(onSendError).createLead(_pendingPayload);
+  }else if(_pendingAction==='deposit'){
+    google.script.run.withSuccessHandler(onDepositSuccess).withFailureHandler(onSendError).addDeposit(_pendingPayload);
+  }
+}
+function onLeadSuccess(result){closeModal();showToast(t('toast_lead_saved')+result.leadId,'success');clearLeadForm();}
+function onDepositSuccess(result){
+  closeModal();
+  showToast((result.depositType==='FTD'?t('toast_ftd'):t('toast_additional'))+' · '+result.depositId,'success');
+  clearDepositForm();
+  _statsLoaded=false;loadStats();
+}
+function onSendError(err){
+  const btn=document.getElementById('btn-confirm');
+  if(btn){btn.disabled=false;btn.innerHTML=t('btn_confirm');}
+  showToast(t('lookup_error')+((err&&err.message)?err.message:String(err)),'error');
+}
+
+/* ── Clear forms ── */
+function clearLeadForm(){
+  ['l-clientId','l-name','l-leadDate','l-yearsOld','l-brand','l-country',
+   'l-savings','l-investments','l-banks','l-cryptoExchange','l-exp','l-comments'].forEach(function(id){
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('l-leadDate').value=today();
+  document.getElementById('l-ownRent').value='';
+  document.querySelectorAll('.exp-pill').forEach(p=>p.classList.remove('active'));
+  clearErrors();
+}
+function clearDepositForm(){
+  document.getElementById('d-search').value='';
+  document.getElementById('d-clientId').value='';
+  document.getElementById('d-amount').value='';
+  document.getElementById('d-depDate').value=today();
+  _lookupCache=null;clearLookupResult();hideSuggestions();clearErrors();
+}
+
+/* ── Toast ── */
+function showToast(msg,type){
+  const t2=document.getElementById('toast');
+  t2.textContent=msg;t2.className='toast '+type+' show';
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){t2.classList.remove('show');},4000);
+}
+
+/* ── Utilities ── */
+function fmtDate(d){
+  if(!d)return'—';
+  const s=(typeof d==='string')?d:d.toISOString();
+  const p=s.split('T')[0].split('-');
+  return p[2]+'/'+p[1]+'/'+p[0];
+}
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
