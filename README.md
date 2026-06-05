@@ -1,6 +1,5 @@
 # yadc-for-sales
 yet another data collector for sales teams
-# Lead Capture System
 
 A Google Apps Script-powered web application for sales agents to register leads and deposits, with manager analytics dashboard support. Built for Google Sheets as the backend database.
 
