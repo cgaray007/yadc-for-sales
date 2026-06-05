@@ -250,7 +250,7 @@ Manager URL: `https://script.google.com/.../exec?manager=1&token=your-secure-tok
 
 ## Screenshots
 
-*(Add your own screenshots here)*
+
 
 ```
 [Agent App - Lead Form]
