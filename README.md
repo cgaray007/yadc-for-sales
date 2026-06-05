@@ -250,9 +250,10 @@ Manager URL: `https://script.google.com/.../exec?manager=1&token=your-secure-tok
 
 ## Screenshots
 
-<img width="676" height="549" alt="WhatsApp Image 2026-06-04 at 16 35 55 (1)" src="https://github.com/user-attachments/assets/d773d5b5-c509-47cf-abf8-a3082148b43b" />
+
 <img width="663" height="1274" alt="WhatsApp Image 2026-06-04 at 16 35 55" src="https://github.com/user-attachments/assets/33bbb4c7-dc31-4f6a-b60d-156f3a4098e4" />
 
+<img width="676" height="549" alt="WhatsApp Image 2026-06-04 at 16 35 55 (1)" src="https://github.com/user-attachments/assets/d773d5b5-c509-47cf-abf8-a3082148b43b" />
 
 ```
 [Agent App - Lead Form]
