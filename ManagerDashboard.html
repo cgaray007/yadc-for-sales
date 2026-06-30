@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #f8fafc;
+      --surface:  #ffffff;
+      --border:   #e2e8f0;
+      --accent:   #3b82f6;
+      --accent-dk:#2563eb;
+      --danger:   #ef4444;
+      --success:  #10b981;
+      --warn:     #f59e0b;
+      --text:     #1e293b;
+      --muted:    #64748b;
+      --radius:   12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; justify-content: space-between;
+      align-items: center; position: sticky; top: 0; z-index: 20;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .header-brand { font-size: 17px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+    /* ── PERIOD BAR ── */
+    .period-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .period-label {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--muted); white-space: nowrap;
+    }
+    .period-btn {
+      padding: 6px 13px; border: 1px solid var(--border); border-radius: 20px;
+      background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 12px;
+      font-weight: 500; color: var(--muted); cursor: pointer;
+      transition: all .15s; white-space: nowrap;
+    }
+    .period-btn:hover  { border-color: #93c5fd; color: var(--accent); background: #eff6ff; }
+    .period-btn.active { border-color: var(--accent); background: #eff6ff; color: var(--accent); font-weight: 600; }
+
+    .period-nav {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .nav-btn {
+      width: 30px; height: 30px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; color: var(--muted);
+      transition: all .15s;
+    }
+    .nav-btn:hover { border-color: #93c5fd; color: var(--accent); background: #eff6ff; }
+    .nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .period-display {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      min-width: 140px; text-align: center;
+    }
+
+    .refresh-btn {
+      padding: 8px 16px; background: var(--accent); color: white;
+      border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; transition: background .15s;
+      white-space: nowrap;
+    }
+    .refresh-btn:hover    { background: var(--accent-dk); }
+    .refresh-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* ── SPINNER ── */
+    .spinner {
+      width: 15px; height: 15px;
+      border: 2px solid rgba(255,255,255,.3); border-top-color: white;
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LOADING OVERLAY ── */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(248,250,252,.85); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .loading-overlay.show { display: flex; }
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .7s linear infinite;
+    }
+
+    /* ── MAIN ── */
+    .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* ── CONFIG WARNINGS ── */
+    .config-warn {
+      display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;
+      background: #fffbeb; border: 1px solid #fcd34d; color: #92400e;
+      font-size: 13px; font-weight: 500;
+    }
+    .config-warn.show { display: flex; align-items: flex-start; gap: 10px; }
+    .config-warn-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── PERIOD HEADING ── */
+    .period-heading {
+      font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 18px;
+    }
+    .period-heading span { color: var(--accent); }
+
+    /* ── KPI GRID ── */
+    .section-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted);
+      margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .kpi-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 16px;
+    }
+    .kpi-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .kpi-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .kpi-icon.primary { background: #eff6ff; }
+    .kpi-icon.success { background: #ecfdf5; }
+    .kpi-icon.warn    { background: #fffbeb; }
+    .kpi-icon.purple  { background: #f5f3ff; }
+    .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; line-height: 1.3; }
+    .kpi-value { font-size: 26px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; line-height: 1.2; }
+    .kpi-value.small { font-size: 18px; }
+    .kpi-prefix { font-size: 16px; font-weight: 500; color: var(--muted); vertical-align: middle; }
+    .kpi-suffix { font-size: 16px; font-weight: 500; color: var(--muted); }
+    .kpi-warning { font-size: 12px; color: var(--warn); font-weight: 500; margin-top: 4px; display: none; }
+    .kpi-warning.show { display: block; }
+    .kpi-footnote { font-size: 11px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+    /* ── GOAL BAR ── */
+    .goal-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px; margin-bottom: 24px;
+    }
+    .goal-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 18px; }
+    .goal-bar-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+    .goal-bar { height: 20px; background: var(--border); border-radius: 10px; overflow: hidden; }
+    .goal-bar-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 10px; transition: width .6s ease;
+      display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+      min-width: 0;
+    }
+    .goal-bar-fill.over  { background: var(--success); }
+    .goal-bar-text { font-size: 11px; font-weight: 600; color: white; white-space: nowrap; }
+    .goal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+    .goal-stat { text-align: center; padding: 12px; background: var(--bg); border-radius: 8px; }
+    .goal-stat-value { font-size: 18px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+    .goal-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+    .goal-unconfigured {
+      text-align: center; padding: 24px; color: var(--muted); font-size: 13px;
+    }
+
+    /* ── TABLE ── */
+    .table-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px; margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .table-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th {
+      padding: 10px 14px; text-align: left;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--muted);
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    td.mono { font-family: 'DM Mono', monospace; }
+    .agent-name { font-weight: 600; }
+    .agent-code { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .progress-cell { display: flex; align-items: center; gap: 8px; min-width: 110px; }
+    .progress-bar  { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+    .progress-fill.over { background: var(--success); }
+    .pct-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .empty-row td { color: var(--muted); text-align: center; padding: 28px; }
+
+    /* ── RANKINGS ── */
+    .rankings-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px;
+    }
+    .rankings-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 18px; }
+    .rankings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .ranking-card { background: var(--bg); border-radius: 8px; padding: 14px; }
+    .ranking-card-title {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .05em;
+      margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .ranking-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
+    }
+    .ranking-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .rank-badge {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      background: var(--border); color: var(--muted);
+    }
+    .rank-badge.r1 { background: #fef3c7; color: #92400e; }
+    .rank-badge.r2 { background: #f1f5f9; color: #475569; }
+    .rank-badge.r3 { background: #fdf4e7; color: #7c4a03; }
+    .ranking-info { flex: 1; min-width: 0; }
+    .ranking-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ranking-code { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+    .ranking-value { font-size: 13px; font-weight: 600; font-family: 'DM Mono', monospace; white-space: nowrap; }
+    .ranking-empty { text-align: center; padding: 14px; color: var(--muted); font-size: 12px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; padding: 13px 20px;
+      border-radius: 8px; font-size: 13px; font-weight: 500; color: white;
+      opacity: 0; transition: all .3s; pointer-events: none; z-index: 300;
+      box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+    .toast.show    { opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+
+    @media (max-width: 640px) {
+      .main { padding: 16px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .goal-stats { grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .period-bar { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+</div>
+
+<div class="header">
+  <div class="header-brand">Manager Dashboard</div>
+
+  <div class="period-bar">
+    <span class="period-label">View:</span>
+    <button class="period-btn active" id="btn-month" onclick="setPeriodMode('month')">This month</button>
+    <button class="period-btn" id="btn-custom"  onclick="setPeriodMode('custom')">Browse months</button>
+    <button class="period-btn" id="btn-alltime" onclick="setPeriodMode('alltime')">All time</button>
+
+    <div class="period-nav" id="period-nav" style="display:none">
+      <button class="nav-btn" id="btn-prev" onclick="stepMonth(-1)" title="Previous month">&#8592;</button>
+      <div class="period-display" id="period-display">—</div>
+      <button class="nav-btn" id="btn-next" onclick="stepMonth(1)" title="Next month">&#8594;</button>
+    </div>
+  </div>
+
+  <button class="refresh-btn" onclick="loadDashboard()" id="refresh-btn">
+    ↻ Refresh
+  </button>
+</div>
+
+<div class="main">
+
+  <!-- Config warnings -->
+  <div class="config-warn" id="warn-targets">
+    <span class="config-warn-icon">⚠️</span>
+    <span id="warn-targets-text"></span>
+  </div>
+  <div class="config-warn" id="warn-empty">
+    <span class="config-warn-icon">ℹ️</span>
+    <span id="warn-empty-text"></span>
+  </div>
+
+  <!-- Period heading -->
+  <div class="period-heading" id="period-heading">Period: <span id="period-heading-value">Loading...</span></div>
+
+  <!-- KPI Cards -->
+  <div class="section-label">Team overview</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <!-- Goal bar -->
+  <div class="goal-section">
+    <div class="goal-title">Team goal progress</div>
+    <div id="goal-body"></div>
+  </div>
+
+  <!-- Agent table -->
+  <div class="table-section">
+    <div class="table-title">Agent performance</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Target</th>
+          <th>Leads</th>
+          <th>FTD</th>
+          <th>Add.</th>
+          <th>STD</th>
+          <th>STD Amt</th>
+          <th>Deposits</th>
+          <th>Dep. Amount</th>
+          <th>Avg. Dep.</th>
+          <th>Goal %</th>
+        </tr>
+      </thead>
+      <tbody id="agents-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Rankings -->
+  <div class="rankings-section">
+    <div class="rankings-title">Top performers</div>
+    <div class="rankings-grid" id="rankings-grid"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ══════════════════════════════════════════
+     STATE
+  ══════════════════════════════════════════ */
+  var _mode     = 'month';   // 'month' | 'custom' | 'alltime'
+  // Single Date() call to avoid midnight boundary race between the two vars
+  var _curYear, _curMonth;
+  (function() { var d = new Date(); _curYear = d.getFullYear(); _curMonth = d.getMonth(); }());
+  var _loading  = false;             // in-flight guard
+  var _toastTimer = null;
+
+  /* ══════════════════════════════════════════
+     PERIOD CONTROL
+  ══════════════════════════════════════════ */
+  function setPeriodMode(mode) {
+    _mode = mode;
+    var now = new Date();
+
+    document.getElementById('btn-month').classList.toggle('active',   mode === 'month');
+    document.getElementById('btn-custom').classList.toggle('active',  mode === 'custom');
+    document.getElementById('btn-alltime').classList.toggle('active', mode === 'alltime');
+    document.getElementById('period-nav').style.display = (mode === 'custom') ? 'flex' : 'none';
+
+    if (mode === 'month') {
+      _curYear  = now.getFullYear();
+      _curMonth = now.getMonth();
+    }
+
+    // Always update display so switching away from alltime shows correct month
+    updatePeriodDisplay();
+
+    // When entering Browse mode, set the Next button disabled state immediately
+    // so you can't navigate into the future before clicking anything
+    if (mode === 'custom') {
+      document.getElementById('btn-next').disabled =
+        (_curYear > now.getFullYear()) ||
+        (_curYear === now.getFullYear() && _curMonth > now.getMonth());
+    }
+
+    loadDashboard();
+  }
+
+  function stepMonth(delta) {
+    var now       = new Date();
+    var nextMonth = _curMonth + delta;
+    var nextYear  = _curYear;
+    if (nextMonth > 11) { nextMonth = 0;  nextYear++; }
+    if (nextMonth < 0)  { nextMonth = 11; nextYear--; }
+
+    // Block navigating into the future
+    if (nextYear > now.getFullYear() ||
+       (nextYear === now.getFullYear() && nextMonth > now.getMonth())) return;
+
+    _curMonth = nextMonth;
+    _curYear  = nextYear;
+
+    document.getElementById('btn-next').disabled =
+      (_curYear > now.getFullYear()) ||
+      (_curYear === now.getFullYear() && _curMonth > now.getMonth());
+
+    updatePeriodDisplay();
+    loadDashboard();
+  }
+
+  function updatePeriodDisplay() {
+    if (_mode === 'alltime') { document.getElementById('period-display').textContent = 'All time'; return; }
+    var d = new Date(_curYear, _curMonth, 1);
+    document.getElementById('period-display').textContent =
+      d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  /* ══════════════════════════════════════════
+     LOAD
+  ══════════════════════════════════════════ */
+  function getCallParams() {
+    // alltime: year=0 is a placeholder — backend ignores it when month=-1
+    if (_mode === 'alltime') return [0, -1];
+    if (_mode === 'month') {
+      var now = new Date();
+      return [now.getFullYear(), now.getMonth()];
+    }
+    return [_curYear, _curMonth];
+  }
+
+  function loadDashboard() {
+    if (_loading) return;
+    _loading = true;
+
+    var btn     = document.getElementById('refresh-btn');
+    var overlay = document.getElementById('loading-overlay');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Loading…';
+    overlay.classList.add('show');
+
+    var params = getCallParams();
+    google.script.run
+      .withSuccessHandler(function(data) {
+        _loading = false;
+        renderDashboard(data);
+        btn.disabled = false;
+        btn.innerHTML = '↻ Refresh';
+        overlay.classList.remove('show');
+      })
+      .withFailureHandler(function(err) {
+        _loading = false;
+        showToast('Error: ' + (err && err.message ? err.message : String(err)), 'error');
+        btn.disabled = false;
+        btn.innerHTML = '↻ Refresh';
+        overlay.classList.remove('show');
+      })
+      .getManagerDashboard(params[0], params[1]);
+  }
+
+  /* ══════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════ */
+  function renderDashboard(data) {
+    if (!data || !data.team || !data.config || !data.agents || !data.rankings) {
+      showToast('Unexpected response from server. Try refreshing.', 'error');
+      return;
+    }
+
+    // Period heading — update the child span's text only, never replace DOM structure
+    var phSpan = document.getElementById('period-heading-value');
+    if (phSpan) phSpan.textContent = data.period || '';
+
+    // Config warnings
+    var wt = document.getElementById('warn-targets');
+    var we = document.getElementById('warn-empty');
+    if (data.config.noTargetsConfigured) {
+      wt.classList.add('show');
+      document.getElementById('warn-targets-text').textContent = data.config.noTargetsConfigured;
+    } else {
+      wt.classList.remove('show');
+    }
+    if (data.config.noDepositsInPeriod) {
+      we.classList.add('show');
+      document.getElementById('warn-empty-text').textContent = data.config.noDepositsInPeriod;
+    } else {
+      we.classList.remove('show');
+    }
+
+    renderKPIs(data.team);
+    renderGoal(data.team);
+    renderTable(data.agents);
+    renderRankings(data.rankings);
+  }
+
+  /* ── KPI cards ── */
+  function renderKPIs(team) {
+    var grid = document.getElementById('kpi-grid');
+    grid.innerHTML = '';
+
+    var cards = [
+      { label:'Leads',           icon:'👥', color:'primary',  val: team.leads,             type:'int' },
+      { label:'FTD',             icon:'🟡', color:'warn',     val: team.ftd,               type:'int' },
+      { label:'Additional',      icon:'🟢', color:'success',  val: team.additional,        type:'int' },
+      { label:'STD count',       icon:'⭐', color:'purple',   val: team.stdCount,          type:'int' },
+      { label:'STD amount',      icon:'💰', color:'primary',  val: team.stdAmount,         type:'currency' },
+      { label:'Deposit amount',  icon:'💵', color:'success',  val: team.depositAmount,     type:'currency' },
+      { label:'Avg. deposit',    icon:'📊', color:'warn',     val: team.averageDeposit,    type:'currency', warnIfZero:'No deposits in this period.' },
+      { label:'Total deposits',  icon:'📦', color:'purple',   val: team.totalDeposits,     type:'int' },
+      // Completion: only warn when there are truly no targets configured (goal === 0).
+      // If goal > 0 but completion is 0, it means no deposits yet — warn-empty covers that.
+      { label:'Completion',      icon:'🎯', color:'success',  val: team.completionPercent, type:'percent',
+        warnIfZero: safeFloat(team && team.goal) === 0 ? 'No targets configured — set values in the Targets sheet.' : null }
+    ];
+
+    // Compute once — used inside the loop to suppress duplicate warnings
+    var noDepositsShowing = document.getElementById('warn-empty').classList.contains('show');
+    var noTargetsShowing  = document.getElementById('warn-targets').classList.contains('show');
+
+    cards.forEach(function(c) {
+      var formattedVal = formatVal(c.val, c.type);
+      var warn = '';
+      if (c.warnIfZero && safeFloat(c.val) === 0 &&
+          !(c.label === 'Avg. deposit'  && noDepositsShowing) &&
+          !(c.label === 'Completion'    && noTargetsShowing)) {
+        warn = '<div class="kpi-warning show">' + esc(c.warnIfZero) + '</div>';
+      }
+
+      // Inactive footnotes
+      var footnote = '';
+      if (c.label === 'Leads' && team.inactiveLeads > 0) {
+        footnote = '<div class="kpi-footnote">incl. ' + esc(String(team.inactiveLeads)) + ' from inactive agent(s)</div>';
+      }
+      if (c.label === 'Deposit amount' && team.inactiveDepositCount > 0) {
+        footnote = '<div class="kpi-footnote">incl. $' + fmtN(team.inactiveDepositAmount) + ' (' + esc(String(team.inactiveDepositCount)) + ' dep.) from inactive agent(s)</div>';
+      }
+
+      var valueHtml = buildValueHtml(formattedVal, c.type);
+      grid.insertAdjacentHTML('beforeend',
+        '<div class="kpi-card">' +
+          '<div class="kpi-header">' +
+            '<div class="kpi-icon ' + c.color + '">' + c.icon + '</div>' +
+            '<div class="kpi-label">' + esc(c.label) + '</div>' +
+          '</div>' +
+          '<div class="kpi-value' + (String(formattedVal).length > 10 ? ' small' : '') + '">' + valueHtml + '</div>' +
+          warn + footnote +
+        '</div>'
+      );
+    });
+  }
+
+  function buildValueHtml(formatted, type) {
+    if (type === 'currency') return '<span class="kpi-prefix">$\u2009</span>' + esc(formatted);
+    if (type === 'percent')  return esc(formatted) + '<span class="kpi-suffix">%</span>';
+    return esc(formatted);
+  }
+
+  /* ── Goal bar ── */
+  function renderGoal(team) {
+    var body   = document.getElementById('goal-body');
+    var goal   = safeFloat(team.goal);
+
+    if (goal === 0) {
+      body.innerHTML = '<div class="goal-unconfigured">⚙️ No targets configured — add agent targets in the <strong>Targets</strong> sheet to enable goal tracking.</div>';
+      return;
+    }
+
+    var pctRaw  = safeFloat(team.completionPercent);
+    var pct     = Math.min(pctRaw, 100);
+    var over    = pctRaw >= 100;
+    var fillCls = over ? 'goal-bar-fill over' : 'goal-bar-fill';
+    var pctText = pctRaw.toFixed(1) + '%';
+
+    body.innerHTML =
+      '<div class="goal-bar-row"><span>Achieved</span><span>' + esc(pctText) + '</span></div>' +
+      '<div class="goal-bar"><div class="' + fillCls + '" style="width:' + pct + '%">' +
+        (pct >= 20 ? '<span class="goal-bar-text">' + esc(pctText) + '</span>' : '') +
+      '</div></div>' +
+      '<div class="goal-stats">' +
+        '<div class="goal-stat"><div class="goal-stat-value">$' + esc(fmtN(team.achieved)) + '</div><div class="goal-stat-label">Achieved</div></div>' +
+        '<div class="goal-stat"><div class="goal-stat-value">$' + esc(fmtN(team.remaining)) + '</div><div class="goal-stat-label">Remaining</div></div>' +
+        '<div class="goal-stat"><div class="goal-stat-value">$' + esc(fmtN(team.goal)) + '</div><div class="goal-stat-label">Goal</div></div>' +
+      '</div>';
+  }
+
+  /* ── Agent table ── */
+  function renderTable(agents) {
+    var tbody = document.getElementById('agents-tbody');
+    tbody.innerHTML = '';
+
+    if (!agents || agents.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="11">No agents found. Check the Agents sheet.</td></tr>';
+      return;
+    }
+
+    agents.forEach(function(a) {
+      var pct     = safeFloat(a.goalPercent);
+      var barW    = Math.min(pct, 100).toFixed(1);
+      var barCls  = pct >= 100 ? 'progress-fill over' : 'progress-fill';
+      var noTarget= safeFloat(a.target) === 0;
+
+      var goalCell = noTarget
+        ? '<td class="pct-label" style="color:var(--warn)">No target set</td>'
+        : '<td><div class="progress-cell"><div class="progress-bar"><div class="' + barCls + '" style="width:' + barW + '%"></div></div><span class="pct-label">' + pct.toFixed(1) + '%</span></div></td>';
+
+      tbody.insertAdjacentHTML('beforeend',
+        '<tr>' +
+          '<td><div class="agent-name">' + esc(a.name) + '</div><div class="agent-code">' + esc(a.code) + '</div></td>' +
+          '<td class="mono">' + (noTarget ? '<span style="color:var(--warn)">—</span>' : '$' + fmtN(a.target)) + '</td>' +
+          '<td class="mono">' + esc(String(a.leads        || 0)) + '</td>' +
+          '<td class="mono">' + esc(String(a.ftd          || 0)) + '</td>' +
+          '<td class="mono">' + esc(String(a.additional   || 0)) + '</td>' +
+          '<td class="mono">' + esc(String(a.stdCount     || 0)) + '</td>' +
+          '<td class="mono">$' + fmtN(a.stdAmount) + '</td>' +
+          '<td class="mono">' + esc(String(a.totalDeposits || 0)) + '</td>' +
+          '<td class="mono">$' + fmtN(a.depositAmount) + '</td>' +
+          '<td class="mono">$' + fmtN(a.averageDeposit) + '</td>' +
+          goalCell +
+        '</tr>'
+      );
+    });
+  }
+
+  /* ── Rankings ── */
+  function renderRankings(rankings) {
+    var grid = document.getElementById('rankings-grid');
+    grid.innerHTML = '';
+
+    var configs = [
+      { key:'topFTD',            title:'Top FTD',           currency:false },
+      { key:'topVolume',         title:'Top volume',        currency:true  },
+      { key:'topSTDCount',       title:'Top STD count',     currency:false },
+      { key:'topSTDAmount',      title:'Top STD amount',    currency:true  },
+      { key:'topAverageDeposit', title:'Highest avg. deposit', currency:true }
+    ];
+
+    configs.forEach(function(cfg) {
+      var items = rankings[cfg.key] || [];
+      var rows  = '';
+
+      if (!items.length) {
+        rows = '<div class="ranking-empty">No data for this period</div>';
+      } else {
+        items.forEach(function(item, idx) {
+          var rankCls = idx === 0 ? 'r1' : idx === 1 ? 'r2' : idx === 2 ? 'r3' : '';
+          var val     = cfg.currency ? ('$' + fmtN(item.value)) : item.value;
+          rows +=
+            '<div class="ranking-item">' +
+              '<div class="rank-badge ' + rankCls + '">' + (idx + 1) + '</div>' +
+              '<div class="ranking-info">' +
+                '<div class="ranking-name">' + esc(item.name) + '</div>' +
+                '<div class="ranking-code">' + esc(item.code) + '</div>' +
+              '</div>' +
+              '<div class="ranking-value">' + esc(String(val)) + '</div>' +
+            '</div>';
+        });
+      }
+
+      grid.insertAdjacentHTML('beforeend',
+        '<div class="ranking-card">' +
+          '<div class="ranking-card-title">' + esc(cfg.title) + '</div>' +
+          rows +
+        '</div>'
+      );
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     FORMATTING HELPERS
+  ══════════════════════════════════════════ */
+  function safeFloat(v) {
+    var n = parseFloat(v);
+    return isFinite(n) ? n : 0;
+  }
+
+  function fmtN(v) {
+    return safeFloat(v).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function formatVal(v, type) {
+    var n = safeFloat(v);
+    if (type === 'int')      return n.toLocaleString('en-US');
+    if (type === 'currency') return n.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+    if (type === 'percent')  return n.toFixed(1);
+    return String(v);
+  }
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  /* ══════════════════════════════════════════
+     TOAST
+  ══════════════════════════════════════════ */
+  function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show';
+    el.classList.add(type || 'success');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() { el.classList.remove('show'); }, 4000);
+  }
+
+  /* ══════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════ */
+  document.addEventListener('DOMContentLoaded', function() {
+    updatePeriodDisplay();
+    loadDashboard();
+  });
+</script>
+</body>
+</html>
