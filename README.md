@@ -449,7 +449,7 @@ getManagerDashboard(0,-1);
 
 # Screenshots
 
-(Add screenshots here.)
+
 
 ---
 
